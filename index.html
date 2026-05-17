@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Segmented International Scoreboard v14.5</title>
+    <title>Segmented International Scoreboard v14.7</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Mono:wght@700&family=Roboto:wght@400;700;900&display=swap');
 
@@ -38,14 +38,14 @@
             box-sizing: border-box;
         }
 
-        /* Widened Flag Boxes for Widescreen Adjustment */
+        /* Fixed Flag Boxes matching the image style */
         .flag-box {
             height: 100%;
             width: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: transparent; 
+            background-color: #333333; /* Default dark grey look before image load */
             padding: 4px; 
             box-sizing: border-box;
         }
@@ -53,7 +53,7 @@
         .flag-box img {
             max-width: 100%;
             max-height: 100%;
-            object-fit: contain;
+            object-fit: contain; 
         }
 
         /* Compressed TLA Code Boxes */
@@ -96,7 +96,7 @@
             font-size: 26px;
             font-weight: 700;
             padding: 4px 20px;
-            min-width: 90px;
+            min-width: 110px;
             text-align: center;
             border-bottom-left-radius: 3px;
             border-bottom-right-radius: 3px;
@@ -206,28 +206,46 @@
 
             document.getElementById('ui-timer').style.backgroundColor = timerBg;
 
+            // Operational Timer State Logic Hub
             if (!isStarted) { 
-                document.getElementById('ui-timer').innerText = "LIVE"; 
-                totalSecs = (parseInt(document.getElementById('cfg-m').value) || 0) * 60 + (parseInt(document.getElementById('cfg-s').value) || 0); 
+                let m = parseInt(document.getElementById('cfg-m').value) || 0;
+                let s = parseInt(document.getElementById('cfg-s').value) || 0;
+                totalSecs = m * 60 + s;
+                
+                if (m === 0 && s === 0) {
+                    document.getElementById('ui-timer').innerText = "LIVE";
+                } else if (m === 45 && s === 0) {
+                    document.getElementById('ui-timer').innerText = "HT";
+                } else if (m === 90 && s === 0) {
+                    document.getElementById('ui-timer').innerText = "FT";
+                } else {
+                    let pad = (v) => v < 10 ? "0"+v : v;
+                    document.getElementById('ui-timer').innerText = pad(m) + ":" + pad(s);
+                }
             } else { 
                 let m = Math.floor(totalSecs / 60); let rs = totalSecs % 60; let pad = (v) => v < 10 ? "0"+v : v;
                 let label = "";
-                if (totalSecs >= 5400) { label = "90+"+pad(m-90)+":"+pad(rs); if (totalSecs > 7200) label = "FT"; } 
-                else if (totalSecs > 2700 && manualStartMinutes < 45) { label = "45+"+pad(m-45)+":"+pad(rs); }
-                else { label = pad(m)+":"+pad(rs); }
+                if (totalSecs >= 5400) { 
+                    label = "90+"+pad(m-90)+":"+pad(rs); 
+                } 
+                else if (totalSecs > 2700 && manualStartMinutes < 45) { 
+                    label = "45+"+pad(m-45)+":"+pad(rs); 
+                }
+                else { 
+                    label = pad(m)+":"+pad(rs); 
+                }
                 document.getElementById('ui-timer').innerText = label; 
             }
         }
 
-        // Intercepts input changes live while keeping user active focus stable
         function manualTimeAdjustment() {
+            let m = parseInt(document.getElementById('cfg-m').value) || 0;
+            let s = parseInt(document.getElementById('cfg-s').value) || 0;
+            totalSecs = m * 60 + s;
             if (isStarted) {
-                let m = parseInt(document.getElementById('cfg-m').value) || 0;
-                let s = parseInt(document.getElementById('cfg-s').value) || 0;
-                totalSecs = m * 60 + s;
                 manualStartMinutes = m;
-                updateUI();
             }
+            updateUI();
         }
 
         function copyURL() {
@@ -265,12 +283,14 @@
         function startTimer() { 
             if (matchInterval) return; 
             isStarted = true; 
-            manualStartMinutes = parseInt(document.getElementById('cfg-m').value) || 0; 
-            totalSecs = manualStartMinutes * 60 + (parseInt(document.getElementById('cfg-s').value) || 0); 
+            let m = parseInt(document.getElementById('cfg-m').value) || 0;
+            let s = parseInt(document.getElementById('cfg-s').value) || 0;
+            manualStartMinutes = m;
+            totalSecs = m * 60 + s; 
             matchInterval = setInterval(() => { 
                 totalSecs++; 
                 updateUI(); 
-                // Only overwrite input box text if the user isn't currently inside typing
+                // Active Typing Focus Intercept Check
                 if (document.activeElement !== document.getElementById('cfg-m')) {
                     document.getElementById('cfg-m').value = Math.floor(totalSecs/60); 
                 }
@@ -280,7 +300,7 @@
             }, 1000); 
         }
         
-        function stopTimer() { clearInterval(matchInterval); matchInterval = null; }
+        function stopTimer() { clearInterval(matchInterval); matchInterval = null; isStarted = false; updateUI(); }
         function resetAll() { stopTimer(); isStarted = false; manualStartMinutes = 0; totalSecs = 0; document.getElementById('cfg-m').value = 0; document.getElementById('cfg-s').value = 0; updateUI(); }
         
         setInterval(() => { 
