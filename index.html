@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Segmented International Scoreboard v14.2</title>
+    <title>Segmented International Scoreboard v14.4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Mono:wght@700&family=Roboto:wght@400;700;900&display=swap');
 
@@ -35,22 +35,25 @@
             background-color: #ffffff;
             overflow: hidden;
             border: 1px solid rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
         }
 
-        /* Full Height Flag Boxes */
+        /* Widened Flag Boxes for Widescreen Adjustment */
         .flag-box {
             height: 100%;
-            width: 100px;
+            width: 120px; /* Increased to 120px to give wide flags room to adjust */
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #333;
+            background-color: transparent; 
+            padding: 4px; 
+            box-sizing: border-box;
         }
 
         .flag-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Keeps the entire flag visible without cutting it off */
         }
 
         /* Compressed TLA Code Boxes */
@@ -64,6 +67,7 @@
             font-size: 46px;
             letter-spacing: 1px;
             text-transform: uppercase;
+            box-sizing: border-box;
         }
 
         /* Center Score Blocks */
@@ -77,6 +81,7 @@
             justify-content: center;
             font-family: 'Bebas Neue', sans-serif;
             font-size: 52px;
+            box-sizing: border-box;
         }
 
         .score-block.home-side {
@@ -98,6 +103,7 @@
             box-shadow: 0px 4px 6px rgba(0,0,0,0.3);
             margin-top: -1px;
             letter-spacing: -0.5px;
+            box-sizing: border-box;
         }
 
         /* --- CONTROL PANEL --- */
@@ -123,14 +129,14 @@
     <div class="scoreboard-master">
         <div class="main-horizontal-bar">
             <div class="flag-box">
-                <img id="ui-h-flag" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='65'></svg>">
+                <img id="ui-h-flag" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='65'></svg>">
             </div>
             <div id="ui-h-name" class="tla-box">VIE</div>
             <div id="ui-h-score" class="score-block home-side">0</div>
             <div id="ui-a-score" class="score-block">0</div>
             <div id="ui-a-name" class="tla-box">AUS</div>
             <div class="flag-box">
-                <img id="ui-a-flag" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='65'></svg>">
+                <img id="ui-a-flag" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='65'></svg>">
             </div>
         </div>
 
@@ -181,8 +187,8 @@
             
             const homeFlagUrl = document.getElementById('cfg-hf').value;
             const awayFlagUrl = document.getElementById('cfg-af').value;
-            document.getElementById('ui-h-flag').src = homeFlagUrl ? homeFlagUrl : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='65'></svg>"; 
-            document.getElementById('ui-a-flag').src = awayFlagUrl ? awayFlagUrl : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='65'></svg>";
+            document.getElementById('ui-h-flag').src = homeFlagUrl ? homeFlagUrl : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='65'></svg>"; 
+            document.getElementById('ui-a-flag').src = awayFlagUrl ? awayFlagUrl : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='65'></svg>";
 
             const homeBg = document.getElementById('clr-h-bg').value;
             const homeTx = document.getElementById('clr-h-tx').value;
@@ -200,7 +206,6 @@
 
             document.getElementById('ui-timer').style.backgroundColor = timerBg;
 
-            // Restored original setup logic to display "LIVE" prior to initialization
             if (!isStarted) { 
                 document.getElementById('ui-timer').innerText = "LIVE"; 
                 totalSecs = (parseInt(document.getElementById('cfg-m').value) || 0) * 60 + (parseInt(document.getElementById('cfg-s').value) || 0); 
