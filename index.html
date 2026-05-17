@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Segmented International Scoreboard v14.4</title>
+    <title>Segmented International Scoreboard v14.5</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Mono:wght@700&family=Roboto:wght@400;700;900&display=swap');
 
@@ -41,7 +41,7 @@
         /* Widened Flag Boxes for Widescreen Adjustment */
         .flag-box {
             height: 100%;
-            width: 120px; /* Increased to 120px to give wide flags room to adjust */
+            width: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -53,7 +53,7 @@
         .flag-box img {
             max-width: 100%;
             max-height: 100%;
-            object-fit: contain; /* Keeps the entire flag visible without cutting it off */
+            object-fit: contain;
         }
 
         /* Compressed TLA Code Boxes */
@@ -146,7 +146,7 @@
     <div class="controller">
         <div class="control-box">
             <h3>Match Timing Config</h3>
-            <div class="input-row"><label>Manual (Min:Sec):</label><input type="number" id="cfg-m" class="short" value="0"> : <input type="number" id="cfg-s" class="short" value="0"></div>
+            <div class="input-row"><label>Manual (Min:Sec):</label><input type="number" id="cfg-m" class="short" value="0" oninput="manualTimeAdjustment()"> : <input type="number" id="cfg-s" class="short" value="0" oninput="manualTimeAdjustment()"></div>
             <div class="input-row"><label>Auto Kickoff (HH:MM):</label><input type="number" id="cfg-sh" class="short" placeholder="HH"> : <input type="number" id="cfg-sm" class="short" placeholder="MM"></div>
         </div>
         <div class="control-box">
@@ -219,6 +219,17 @@
             }
         }
 
+        // Intercepts input changes live while keeping user active focus stable
+        function manualTimeAdjustment() {
+            if (isStarted) {
+                let m = parseInt(document.getElementById('cfg-m').value) || 0;
+                let s = parseInt(document.getElementById('cfg-s').value) || 0;
+                totalSecs = m * 60 + s;
+                manualStartMinutes = m;
+                updateUI();
+            }
+        }
+
         function copyURL() {
             const params = new URLSearchParams({
                 hn: document.getElementById('cfg-hn').value, an: document.getElementById('cfg-an').value,
@@ -251,7 +262,24 @@
             updateUI();
         };
 
-        function startTimer() { if (matchInterval) return; isStarted = true; manualStartMinutes = parseInt(document.getElementById('cfg-m').value) || 0; totalSecs = manualStartMinutes * 60 + (parseInt(document.getElementById('cfg-s').value) || 0); matchInterval = setInterval(() => { totalSecs++; updateUI(); document.getElementById('cfg-m').value = Math.floor(totalSecs/60); document.getElementById('cfg-s').value = totalSecs%60; }, 1000); }
+        function startTimer() { 
+            if (matchInterval) return; 
+            isStarted = true; 
+            manualStartMinutes = parseInt(document.getElementById('cfg-m').value) || 0; 
+            totalSecs = manualStartMinutes * 60 + (parseInt(document.getElementById('cfg-s').value) || 0); 
+            matchInterval = setInterval(() => { 
+                totalSecs++; 
+                updateUI(); 
+                // Only overwrite input box text if the user isn't currently inside typing
+                if (document.activeElement !== document.getElementById('cfg-m')) {
+                    document.getElementById('cfg-m').value = Math.floor(totalSecs/60); 
+                }
+                if (document.activeElement !== document.getElementById('cfg-s')) {
+                    document.getElementById('cfg-s').value = totalSecs%60; 
+                }
+            }, 1000); 
+        }
+        
         function stopTimer() { clearInterval(matchInterval); matchInterval = null; }
         function resetAll() { stopTimer(); isStarted = false; manualStartMinutes = 0; totalSecs = 0; document.getElementById('cfg-m').value = 0; document.getElementById('cfg-s').value = 0; updateUI(); }
         
