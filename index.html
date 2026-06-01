@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Segmented International Scoreboard v14.7</title>
+    <title>Segmented International Scoreboard v14.11</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Mono:wght@700&family=Roboto:wght@400;700;900&display=swap');
 
@@ -38,14 +38,13 @@
             box-sizing: border-box;
         }
 
-        /* Fixed Flag Boxes matching the image style */
         .flag-box {
             height: 100%;
             width: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #333333; /* Default dark grey look before image load */
+            background-color: #333333;
             padding: 4px; 
             box-sizing: border-box;
         }
@@ -56,7 +55,6 @@
             object-fit: contain; 
         }
 
-        /* Compressed TLA Code Boxes */
         .tla-box {
             height: 100%;
             width: 105px;
@@ -70,7 +68,6 @@
             box-sizing: border-box;
         }
 
-        /* Center Score Blocks */
         .score-block {
             height: 100%;
             width: 75px;
@@ -88,22 +85,25 @@
             border-right: 1px solid #333333;
         }
 
-        /* Hanging Bottom Clock */
         .hanging-timer-box {
             background-color: var(--timer-bg);
             color: #ffffff;
             font-family: 'Roboto Mono', monospace;
-            font-size: 26px;
+            font-size: 32px; 
             font-weight: 700;
-            padding: 4px 20px;
-            min-width: 110px;
-            text-align: center;
-            border-bottom-left-radius: 3px;
-            border-bottom-right-radius: 3px;
+            padding: 6px 25px; 
+            min-width: 160px; 
+            height: 60px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
             box-shadow: 0px 4px 6px rgba(0,0,0,0.3);
             margin-top: -1px;
             letter-spacing: -0.5px;
             box-sizing: border-box;
+            white-space: nowrap;
         }
 
         /* --- CONTROL PANEL --- */
@@ -116,6 +116,14 @@
         input[type="color"] { border: none; width: 45px; height: 26px; background: transparent; cursor: pointer; }
         .short { width: 65px; text-align: center; }
         .full { flex-grow: 1; }
+        
+        /* Goal Adjuster Layout */
+        .goal-adjust-zone { display: flex; gap: 5px; margin-left: 10px; }
+        .btn-goal { padding: 4px 10px; font-size: 12px; font-weight: bold; cursor: pointer; border: none; border-radius: 3px; background: #444; color: #fff; transition: 0.1s; }
+        .btn-goal:hover { background: #555; }
+        .btn-goal.plus { background: #28a745; }
+        .btn-goal.plus:hover { background: #218838; }
+
         .button-zone { grid-column: span 2; display: flex; gap: 12px; justify-content: center; }
         button { padding: 12px 25px; font-weight: bold; cursor: pointer; border: none; border-radius: 4px; text-transform: uppercase; transition: 0.2s; }
         .btn-start { background: #28a745; color: white; }
@@ -126,6 +134,7 @@
 </head>
 <body>
 
+    <!-- OVERLAY LAYOUT DISPLAY -->
     <div class="scoreboard-master">
         <div class="main-horizontal-bar">
             <div class="flag-box">
@@ -140,9 +149,11 @@
             </div>
         </div>
 
+        <!-- Hanging Match Timer -->
         <div id="ui-timer" class="hanging-timer-box">LIVE</div>
     </div>
 
+    <!-- GRAPHICAL INTERFACE CONTROLLER -->
     <div class="controller">
         <div class="control-box">
             <h3>Match Timing Config</h3>
@@ -151,8 +162,24 @@
         </div>
         <div class="control-box">
             <h3>Teams & Scores</h3>
-            <div class="input-row"><label>Home (Code/Score):</label><input type="text" id="cfg-hn" class="short" value="VIE"> <input type="number" id="cfg-hg" class="short" value="0"></div>
-            <div class="input-row"><label>Away (Code/Score):</label><input type="text" id="cfg-an" class="short" value="AUS"> <input type="number" id="cfg-ag" class="short" value="0"></div>
+            <div class="input-row">
+                <label>Home (Code/Score):</label>
+                <input type="text" id="cfg-hn" class="short" value="VIE"> 
+                <input type="number" id="cfg-hg" class="short" value="0">
+                <div class="goal-adjust-zone">
+                    <button class="btn-goal plus" onclick="adjustGoal('cfg-hg', 1)">+1</button>
+                    <button class="btn-goal" onclick="adjustGoal('cfg-hg', -1)">-1</button>
+                </div>
+            </div>
+            <div class="input-row">
+                <label>Away (Code/Score):</label>
+                <input type="text" id="cfg-an" class="short" value="AUS"> 
+                <input type="number" id="cfg-ag" class="short" value="0">
+                <div class="goal-adjust-zone">
+                    <button class="btn-goal plus" onclick="adjustGoal('cfg-ag', 1)">+1</button>
+                    <button class="btn-goal" onclick="adjustGoal('cfg-ag', -1)">-1</button>
+                </div>
+            </div>
         </div>
         <div class="control-box">
             <h3>Dynamic Visual Styling</h3>
@@ -176,12 +203,11 @@
     </div>
 
     <script>
-        let totalSecs = 0; let matchInterval = null; let isStarted = false; let manualStartMinutes = 0;
+        let totalSecs = 0; let matchInterval = null; let isStarted = false;
 
         function updateUI() {
             document.getElementById('ui-h-name').innerText = document.getElementById('cfg-hn').value.toUpperCase(); 
             document.getElementById('ui-a-name').innerText = document.getElementById('cfg-an').value.toUpperCase();
-            
             document.getElementById('ui-h-score').innerText = document.getElementById('cfg-hg').value; 
             document.getElementById('ui-a-score').innerText = document.getElementById('cfg-ag').value;
             
@@ -196,56 +222,118 @@
             const awayTx = document.getElementById('clr-a-tx').value;
             const timerBg = document.getElementById('clr-t-bg').value;
 
-            const hBox = document.getElementById('ui-h-name');
-            hBox.style.backgroundColor = homeBg;
-            hBox.style.color = homeTx;
-
-            const aBox = document.getElementById('ui-a-name');
-            aBox.style.backgroundColor = awayBg;
-            aBox.style.color = awayTx;
-
+            document.getElementById('ui-h-name').style.backgroundColor = homeBg;
+            document.getElementById('ui-h-name').style.color = homeTx;
+            document.getElementById('ui-a-name').style.backgroundColor = awayBg;
+            document.getElementById('ui-a-name').style.color = awayTx;
             document.getElementById('ui-timer').style.backgroundColor = timerBg;
 
-            // Operational Timer State Logic Hub
-            if (!isStarted) { 
-                let m = parseInt(document.getElementById('cfg-m').value) || 0;
-                let s = parseInt(document.getElementById('cfg-s').value) || 0;
-                totalSecs = m * 60 + s;
-                
-                if (m === 0 && s === 0) {
-                    document.getElementById('ui-timer').innerText = "LIVE";
-                } else if (m === 45 && s === 0) {
-                    document.getElementById('ui-timer').innerText = "HT";
-                } else if (m === 90 && s === 0) {
-                    document.getElementById('ui-timer').innerText = "FT";
-                } else {
-                    let pad = (v) => v < 10 ? "0"+v : v;
-                    document.getElementById('ui-timer').innerText = pad(m) + ":" + pad(s);
-                }
-            } else { 
-                let m = Math.floor(totalSecs / 60); let rs = totalSecs % 60; let pad = (v) => v < 10 ? "0"+v : v;
-                let label = "";
-                if (totalSecs >= 5400) { 
-                    label = "90+"+pad(m-90)+":"+pad(rs); 
-                } 
-                else if (totalSecs > 2700 && manualStartMinutes < 45) { 
-                    label = "45+"+pad(m-45)+":"+pad(rs); 
-                }
-                else { 
-                    label = pad(m)+":"+pad(rs); 
-                }
-                document.getElementById('ui-timer').innerText = label; 
+            let pad = (v) => v < 10 ? "0"+v : v;
+
+            if (!isStarted && totalSecs === 0) {
+                document.getElementById('ui-timer').innerText = "LIVE";
+                return;
             }
+
+            // Segmented Sequential Timing Architecture
+            if (totalSecs <= 2700) {
+                let m = Math.floor(totalSecs / 60);
+                let s = totalSecs % 60;
+                document.getElementById('ui-timer').innerText = pad(m) + ":" + pad(s);
+            }
+            else if (totalSecs <= 3120) {
+                let extraSecs = totalSecs - 2700;
+                let em = Math.floor(extraSecs / 60);
+                let es = extraSecs % 60;
+                document.getElementById('ui-timer').innerText = "45:00 +" + pad(em) + ":" + pad(es);
+            }
+            else if (totalSecs <= 3720) {
+                document.getElementById('ui-timer').innerText = "45+ 9 MINS";
+            }
+            else if (totalSecs <= 6420) {
+                let secondHalfElapsed = totalSecs - 3720;
+                let activeSecs = (45 * 60) + secondHalfElapsed;
+                let m = Math.floor(activeSecs / 60);
+                let s = activeSecs % 60;
+                document.getElementById('ui-timer').innerText = pad(m) + ":" + pad(s);
+            }
+            else if (totalSecs <= 7620) {
+                let extraSecs = totalSecs - 6420;
+                let em = Math.floor(extraSecs / 60);
+                let es = extraSecs % 60;
+                document.getElementById('ui-timer').innerText = "90:00 +" + pad(em) + ":" + pad(es);
+            }
+            else if (totalSecs <= 9420) {
+                let extraTimeElapsed = totalSecs - 7620;
+                let activeSecs = (90 * 60) + extraTimeElapsed;
+                let m = Math.floor(activeSecs / 60);
+                let s = activeSecs % 60;
+                document.getElementById('ui-timer').innerText = pad(m) + ":" + pad(s);
+            }
+            else {
+                document.getElementById('ui-timer').innerText = "120 MINS + 5 MINS";
+            }
+        }
+
+        // Functional scoring modifiers script
+        function adjustGoal(inputId, amount) {
+            const input = document.getElementById(inputId);
+            let currentVal = parseInt(input.value) || 0;
+            let newVal = currentVal + amount;
+            if (newVal < 0) newVal = 0;
+            input.value = newVal;
+            updateUI();
         }
 
         function manualTimeAdjustment() {
             let m = parseInt(document.getElementById('cfg-m').value) || 0;
             let s = parseInt(document.getElementById('cfg-s').value) || 0;
-            totalSecs = m * 60 + s;
-            if (isStarted) {
-                manualStartMinutes = m;
+            
+            if (m < 45) {
+                totalSecs = m * 60 + s;
+            } else if (m === 45) {
+                totalSecs = 2700 + s; 
+            } else if (m > 45 && m < 90) {
+                totalSecs = 3720 + ((m - 45) * 60) + s;
+            } else if (m === 90) {
+                totalSecs = 6420 + s;
+            } else if (m > 90 && m <= 120) {
+                totalSecs = 7620 + ((m - 90) * 60) + s;
+            } else {
+                totalSecs = 9421;
             }
             updateUI();
+        }
+
+        function syncInputsFromSeconds() {
+            if (document.activeElement === document.getElementById('cfg-m') || document.activeElement === document.getElementById('cfg-s')) return;
+
+            if (totalSecs <= 2700) {
+                document.getElementById('cfg-m').value = Math.floor(totalSecs / 60);
+                document.getElementById('cfg-s').value = totalSecs % 60;
+            } else if (totalSecs <= 3120) {
+                document.getElementById('cfg-m').value = 45;
+                document.getElementById('cfg-s').value = totalSecs - 2700;
+            } else if (totalSecs <= 3720) {
+                document.getElementById('cfg-m').value = 45;
+                document.getElementById('cfg-s').value = 0;
+            } else if (totalSecs <= 6420) {
+                let secondHalfElapsed = totalSecs - 3720;
+                let activeSecs = (45 * 60) + secondHalfElapsed;
+                document.getElementById('cfg-m').value = Math.floor(activeSecs / 60);
+                document.getElementById('cfg-s').value = activeSecs % 60;
+            } else if (totalSecs <= 7620) {
+                document.getElementById('cfg-m').value = 90;
+                document.getElementById('cfg-s').value = totalSecs - 6420;
+            } else if (totalSecs <= 9420) {
+                let extraTimeElapsed = totalSecs - 7620;
+                let activeSecs = (90 * 60) + extraTimeElapsed;
+                document.getElementById('cfg-m').value = Math.floor(activeSecs / 60);
+                document.getElementById('cfg-s').value = activeSecs % 60;
+            } else {
+                document.getElementById('cfg-m').value = 120;
+                document.getElementById('cfg-s').value = 0;
+            }
         }
 
         function copyURL() {
@@ -257,7 +345,7 @@
                 abg: document.getElementById('clr-a-bg').value, atx: document.getElementById('clr-a-tx').value,
                 tbg: document.getElementById('clr-t-bg').value,
                 sh: document.getElementById('cfg-sh').value, sm: document.getElementById('cfg-sm').value,
-                mm: document.getElementById('cfg-m').value, ms: document.getElementById('cfg-s').value
+                ts: totalSecs
             });
             const fullURL = window.location.href.split('?')[0] + '?' + params.toString();
             const textArea = document.createElement("textarea"); textArea.value = fullURL; document.body.appendChild(textArea); textArea.select();
@@ -275,7 +363,8 @@
                 document.getElementById('clr-a-bg').value = urlParams.get('abg') || "#ffcc00"; document.getElementById('clr-a-tx').value = urlParams.get('atx') || "#006633";
                 document.getElementById('clr-t-bg').value = urlParams.get('tbg') || "#051a30";
                 document.getElementById('cfg-sh').value = urlParams.get('sh') || ""; document.getElementById('cfg-sm').value = urlParams.get('sm') || "";
-                document.getElementById('cfg-m').value = urlParams.get('mm') || 0; document.getElementById('cfg-s').value = urlParams.get('ms') || 0;
+                totalSecs = parseInt(urlParams.get('ts')) || 0;
+                syncInputsFromSeconds();
             }
             updateUI();
         };
@@ -283,25 +372,15 @@
         function startTimer() { 
             if (matchInterval) return; 
             isStarted = true; 
-            let m = parseInt(document.getElementById('cfg-m').value) || 0;
-            let s = parseInt(document.getElementById('cfg-s').value) || 0;
-            manualStartMinutes = m;
-            totalSecs = m * 60 + s; 
             matchInterval = setInterval(() => { 
                 totalSecs++; 
                 updateUI(); 
-                // Active Typing Focus Intercept Check
-                if (document.activeElement !== document.getElementById('cfg-m')) {
-                    document.getElementById('cfg-m').value = Math.floor(totalSecs/60); 
-                }
-                if (document.activeElement !== document.getElementById('cfg-s')) {
-                    document.getElementById('cfg-s').value = totalSecs%60; 
-                }
+                syncInputsFromSeconds();
             }, 1000); 
         }
         
         function stopTimer() { clearInterval(matchInterval); matchInterval = null; isStarted = false; updateUI(); }
-        function resetAll() { stopTimer(); isStarted = false; manualStartMinutes = 0; totalSecs = 0; document.getElementById('cfg-m').value = 0; document.getElementById('cfg-s').value = 0; updateUI(); }
+        function resetAll() { stopTimer(); isStarted = false; totalSecs = 0; document.getElementById('cfg-m').value = 0; document.getElementById('cfg-s').value = 0; updateUI(); }
         
         setInterval(() => { 
             let h = document.getElementById('cfg-sh').value; let m = document.getElementById('cfg-sm').value; 
